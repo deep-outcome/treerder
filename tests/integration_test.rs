@@ -1,29 +1,3 @@
-# treerder
-- Retrieval tree for sorting any type implementing `Orderable` trait.
-- Implementation for `&str` and `String` oob.
-
-### Basic usage
-
-```rust
-let mut test = [
-    String::from("zzz"),    
-    String::from("ZZZ"),    
-    String::from("aaa"),    
-    String::from("AAA"),    
-];
-
-let mut proof = test.clone();
-proof.sort();
-
-let mut orderer = Treerder::new();
-orderer.order(&mut test);
-
-assert_eq!(proof, test);
-```
-
-### `Orderable` implementation
-
-```rust
 use treerder::{Orderable, Treerder, Alphabet, ab as ab_fn};
 
 #[derive(Debug, PartialEq)]
@@ -36,7 +10,7 @@ struct LocalUsizeCharIterator {
 
 impl Iterator for LocalUsizeCharIterator {
     type Item = char;
-    
+
     fn next(&mut self) -> Option<char> {
         if self.x {
             self.x = false;
@@ -49,16 +23,16 @@ impl Iterator for LocalUsizeCharIterator {
 
 impl Orderable for LocalUsize {
     type Shadow = usize;
-    
+
     fn chars(&self) -> impl Iterator<Item = char> {
         let c = self.0.to_string().chars().next().unwrap();
         LocalUsizeCharIterator { c, x: true }
     }
-    
+
     fn shadow(&self) -> Self::Shadow {
         self.0
     }
-    
+
     fn steady(s: Self::Shadow) -> Self {
         LocalUsize(s)
     }
@@ -72,12 +46,16 @@ fn ab() -> Alphabet<LocalUsize> {
     ab_fn::<LocalUsize>(10)
 }
 
-let mut nums = [9, 8, 7, 5, 3, 1].map(|x| LocalUsize(x));
+#[test]
+fn test() {
+    let mut nums = localusize(&[9, 8, 6, 6, 7, 5, 3, 1]);
 
-let mut orderer = Treerder::<LocalUsize>::new_with(ix, ab);
-orderer.order(&mut nums);
+    let mut orderer = Treerder::<LocalUsize>::new_with(ix, ab);
+    orderer.order(&mut nums);
 
-let proof = [1, 3, 5, 7, 8, 9].map(|x| LocalUsize(x));
-assert_eq!(proof, nums);
+    assert_eq!(localusize(&[1, 3, 5, 6, 6, 7, 8, 9]), nums);
 
-```
+    fn localusize(nums: &[usize; 8]) -> [LocalUsize; 8] {
+        nums.map(|x| LocalUsize(x))
+    }
+}

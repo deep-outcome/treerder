@@ -1,6 +1,15 @@
 [package]
-name = "trie_sort"
-version = "0.1.0"
+name = "treerder"
+version = "1.0.0"
+authors= [ "software9119.technology" ]
 edition = "2021"
+description = "Trie ordering for type implementing Orderable."
+readme = "./README.md"
+homepage = "https://github.com/bravequickcleverfibreyarn/treerder"
+repository = "https://github.com/bravequickcleverfibreyarn/treerder"
+license = "MIT"
+keywords = ["trie","ordering","sorting","retrieval tree"]
+categories = ["algorithms"]
 
-[dependencies]
+[features]
+test-ext = []
