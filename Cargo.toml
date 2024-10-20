@@ -1,6 +1,6 @@
 [package]
 name = "treerder"
-version = "1.0.0"
+version = "1.0.1"
 authors= [ "software9119.technology" ]
 edition = "2021"
 description = "Trie ordering for type implementing Orderable."
@@ -10,6 +10,7 @@ repository = "https://github.com/bravequickcleverfibreyarn/treerder"
 license = "MIT"
 keywords = ["trie","ordering","sorting","retrieval-tree"]
 categories = ["algorithms"]
+documentation = "https://docs.rs/treerder/latest/treerder/"
 
 [features]
 test-ext = []
