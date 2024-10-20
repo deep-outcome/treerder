@@ -8,7 +8,7 @@ readme = "./README.md"
 homepage = "https://github.com/bravequickcleverfibreyarn/treerder"
 repository = "https://github.com/bravequickcleverfibreyarn/treerder"
 license = "MIT"
-keywords = ["trie","ordering","sorting","retrieval tree"]
+keywords = ["trie","ordering","sorting","retrieval-tree"]
 categories = ["algorithms"]
 
 [features]
