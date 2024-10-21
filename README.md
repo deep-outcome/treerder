@@ -1,6 +1,6 @@
 # treerder
-- Retrieval tree for sorting any type implementing `Orderable` trait.
-- Implementation for `&str` and `String` oob.
+- retrieval tree for sorting any type implementing `Orderable` trait
+- implementation for `&str` and `String` oob
 
 ### asymptotic computational complexity
 
