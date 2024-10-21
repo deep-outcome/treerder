@@ -2,7 +2,12 @@
 - Retrieval tree for sorting any type implementing `Orderable` trait.
 - Implementation for `&str` and `String` oob.
 
-### Basic usage
+### asymptotic computational complexity
+
+- time complexity  | Ο(s) where s is sum of all `char`s iterated over
+- space complexity | Θ(q) where q is number of unique nodes, i.e. `char`s in respective branches
+
+### basic usage
 
 ```rust
 let mut test = [

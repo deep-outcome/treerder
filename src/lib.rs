@@ -232,6 +232,7 @@ pub mod english_letters {
     }
 }
 
+// TC: Θ(n ⋅ alphabet size + e) ⇒ Θ(n), n = nodes count, e = entries count
 fn exc<'b, T>(ab: &'b mut Alphabet<T>, strs: &mut [T], mut wr_ix: usize) -> usize
 where
     T: Orderable,
@@ -297,6 +298,9 @@ where
     /// _originals_ in input without dropping them.
     ///
     /// For details see `Orderable`.
+    ///
+    /// - TC: Ο(s) where s is sum of all `char`s iterated over.
+    /// - SC: Θ(q) where q is number of unique nodes, i.e. `char`s in respective branches.
     pub fn order(&mut self, strs: &mut [T]) {
         let mut wr_ix = 0;
 
@@ -317,6 +321,8 @@ where
         exc(&mut self.root, strs, wr_ix);
     }
 
+    // TC: Θ(l), l = `cs` length
+    // SC: Θ(q ⋅ alphabet size) ⇒ Θ(q) as long as q > alphabet size, q = unique nodes count, [leaf node does not have arms (alphabet)]
     fn ins(&mut self, entry: T::Shadow, mut c: char, cs: &mut impl Iterator<Item = char>) {
         let ix = self.ix;
         let ab = self.ab;
