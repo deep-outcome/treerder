@@ -4,8 +4,8 @@
 
 ### asymptotic computational complexity
 
-- time complexity  | Ο(s) where s is sum of all `char`s iterated over
-- space complexity | Θ(q) where q is number of unique nodes, i.e. `char`s in respective branches
+- tc | Ο(s) where s is sum of all `char`s iterated over
+- sc | Θ(q) where q is number of unique nodes, i.e. `char`s in respective branches
 
 ### basic usage
 
