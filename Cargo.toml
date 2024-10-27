@@ -1,6 +1,6 @@
 [package]
 name = "treerder"
-version = "1.0.5"
+version = "1.0.6"
 authors= [ "software9119.technology" ]
 edition = "2021"
 description = "Trie ordering for type implementing Orderable."

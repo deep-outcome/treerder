@@ -1,5 +1,6 @@
 # treerder
-- retrieval tree for sorting any type implementing `Orderable` trait
+- retrieval tree orderer
+- orders any type implementing `Orderable` trait
 - implementation for `&str` and `String` oob
 - English alphabet A–Za–z oob
 
