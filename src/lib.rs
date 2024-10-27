@@ -1,7 +1,9 @@
+//! Treerder allows for ordering of any type implementing `Orderable`. Oob support for `&str` and `String` and English alphabet A–Za–z.
+
 use std::vec::Vec;
 use core::mem::{forget, replace};
 
-/// `Orderable` is type which is ordable by its
+/// `impl Orderable` is type which is ordable by its
 /// `char` sequence representation.
 ///
 /// Careful implementation needed. When wrongly implemented,
@@ -12,7 +14,7 @@ use core::mem::{forget, replace};
 /// optimization by avoiding excesive scenarios like deep cloning and others.
 ///
 /// Check this phantasmal implementation for `usize`.
-/// Orderable implementation cannot work without providing `Treerder` with
+/// `Orderable` implementation cannot work without providing `Treerder` with
 /// appropriate function for alphabet instantiation same as function for `char`
 /// index generation. Check `english_letters::ab` and `english_letters::ix`.
 /// ```
@@ -73,7 +75,7 @@ use core::mem::{forget, replace};
 /// assert_eq!(proof, nums);
 /// ```
 pub trait Orderable {
-    /// Type that will represent `Orderable` in internal structures.
+    /// Type that will represent `impl Orderable` in internal structures.
     ///
     /// For heap allocated types providing raw pointer is sufficient while
     /// for stack allocations full reproduction is needed.
@@ -262,7 +264,7 @@ where
     wr_ix
 }
 
-/// `Treerder` is coupled with `Orderable`. Enables ordering of any `Orderable` type by
+/// `Treerder` is coupled with `Orderable`. Enables ordering of any `impl Orderable` type by
 /// its `char` sequence representation.
 ///
 /// For details see `fn order`.
@@ -294,7 +296,7 @@ where
 
     /// Stable ordering.
     ///
-    /// ⚠️ `Orderable` recreations made out of `Orderable::Shadow` replace
+    /// ⚠️ `impl Orderable` recreations made out of `Orderable::Shadow` replace
     /// _originals_ in input without dropping them.
     ///
     /// For details see `Orderable`.
