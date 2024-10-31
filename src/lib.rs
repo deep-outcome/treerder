@@ -1,4 +1,4 @@
-//! Treerder allows for ordering of any type implementing `Orderable`. Oob support for `&str` and `String` and English alphabet A–Za–z.
+//! Treerder, retrieval tree orderer, orders any `Orderable` implementing type by its `char`s sequence representation . Oob support for `&str` and `String` and English alphabet A–Za–z.
 
 use std::vec::Vec;
 use core::mem::{forget, replace};

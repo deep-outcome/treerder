@@ -1,5 +1,5 @@
 # treerder
-- retrieval tree orderer
+- retrieval tree orderer / ordering based on `char`s sequence representation
 - orders any type implementing `Orderable` trait
 - implementation for `&str` and `String` oob
 - English alphabet A–Za–z oob
