@@ -888,24 +888,20 @@ mod tests_of_units {
                     let c = chars[c_ix];
                     let l = &sup_ab[ix(c)];
 
-                    let non_terminal_it = c_ix != last_ix;
+                    let terminal_it = c_ix == last_ix;
 
                     let sub_ab = l.ab.as_ref();
-                    assert_eq!(
-                        non_terminal_it,
-                        sub_ab.is_some(),
-                        "{c_ix}, {c}, {non_terminal_it}"
-                    );
+                    assert_eq!(terminal_it, sub_ab.is_none(), "{c_ix}, {c}, {terminal_it}");
 
-                    if non_terminal_it {
-                        sup_ab = sub_ab.unwrap();
-                    } else {
+                    if terminal_it {
                         let ens = l.ens.as_ref();
                         assert!(ens.is_some());
                         let ens = ens.unwrap();
                         assert_eq!(2, ens.len());
                         assert_eq!(entry1.as_ptr(), ens[0].as_ptr());
                         assert_eq!(entry2.as_ptr(), ens[1].as_ptr());
+                    } else {
+                        sup_ab = sub_ab.unwrap();
                     }
                 }
             }
