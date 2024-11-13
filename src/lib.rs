@@ -229,7 +229,7 @@ pub mod english_letters {
         const A: usize = 'A' as usize;
         #[allow(non_upper_case_globals)]
         const a: usize = 'a' as usize;
-        
+
         match code_point {
             | c if c > 64 && c < 91 => c - A,
             | c if c > 96 && c < 123 => c - a + BASE_ALPHABET_LEN,
