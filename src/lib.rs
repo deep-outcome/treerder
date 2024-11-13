@@ -223,7 +223,7 @@ pub mod english_letters {
     }
 
     /// Index conversion function.
-    pub fn ix(c: char) -> usize {
+    pub const fn ix(c: char) -> usize {
         let code_point = c as usize;
 
         match code_point {
