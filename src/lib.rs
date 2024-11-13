@@ -169,7 +169,7 @@ pub type Ab<T> = fn() -> Alphabet<T>;
 
 type Entries<T> = Vec<T>;
 
-/// Alphabet function, tree arms generation of lenght specified.
+/// Alphabet function, tree arms generation of length specified.
 pub fn ab<T>(len: usize) -> Alphabet<T>
 where
     T: Orderable,
