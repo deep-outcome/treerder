@@ -223,7 +223,7 @@ pub mod english_letters {
     }
 
     /// Index conversion function.
-    pub const fn ix(c: char) -> usize {
+    pub fn ix(c: char) -> usize {
         let code_point = c as usize;
 
         const A: usize = 'A' as usize;
@@ -233,7 +233,9 @@ pub mod english_letters {
         match code_point {
             | c if c > 64 && c < 91 => c - A,
             | c if c > 96 && c < 123 => c - a + BASE_ALPHABET_LEN,
-            | _ => panic!("Unsupported char. Cannot convert to index."),
+            | _ => {
+                panic!("Index conversion failed because code point {code_point} is unsupported.")
+            },
         }
     }
 }
@@ -450,24 +452,26 @@ mod tests_of_units {
             fn unsupported_char() {
                 let ucs = unsupported_chars();
 
-                for c in ucs {
+                for (c, cp) in ucs.map(|x| (x as char, x)) {
                     let result = catch_unwind(|| ix(c));
                     assert!(result.is_err());
 
                     let err = result.err().unwrap();
-                    let downcast = err.downcast_ref::<&str>().unwrap();
-                    assert_eq!(&"Unsupported char. Cannot convert to index.", downcast);
+                    let downcast = err.downcast_ref::<String>().unwrap();
+                    let proof =
+                        format!("Index conversion failed because code point {cp} is unsupported.");
+                    assert_eq!(&proof, downcast);
                 }
             }
 
-            fn unsupported_chars() -> [char; 4] {
+            fn unsupported_chars() -> [u8; 4] {
                 #[rustfmt::skip] let ucs =
                 [
                     'A' as u8 -1, 'Z' as u8 +1, // 65–90
                     'a' as u8 -1, 'z' as u8 +1, // 97–122
                 ];
 
-                ucs.map(|x| x as char)
+                ucs
             }
         }
     }
@@ -920,4 +924,4 @@ mod tests_of_units {
     }
 }
 
-// cargo test --features test-ext
+// cargo test --features test-ext --release
