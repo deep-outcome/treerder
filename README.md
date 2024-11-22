@@ -3,6 +3,7 @@
 - orders any type implementing `Orderable` trait
 - implementation for `&str` and `String` oob
 - English alphabet A–Za–z oob
+- customizable alphabet
 
 ### asymptotic computational complexity
 
@@ -28,7 +29,7 @@ orderer.order(&mut test);
 assert_eq!(proof, test);
 ```
 
-### `Orderable` implementation
+### `Orderable` implementation with custom alphabet
 
 ```rust
 use treerder::{Orderable, Treerder, Alphabet, ab as ab_fn};
