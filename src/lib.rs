@@ -11,7 +11,7 @@ use core::mem::{forget, replace};
 /// See `Shadow` associated type for more information.
 ///
 /// Craft behing this is that `Orderable` trait allows for perfomance
-/// optimization by avoiding excesive scenarios like deep cloning and others.
+/// optimization by avoiding excessive scenarios like deep cloning and others.
 ///
 /// Check this phantasmal implementation for `usize`.
 /// `Orderable` implementation cannot work without providing `Treerder` with
