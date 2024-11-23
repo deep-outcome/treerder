@@ -143,7 +143,7 @@ impl<T> Letter<T>
 where
     T: Orderable,
 {
-    fn new() -> Self {
+    const fn new() -> Self {
         Letter {
             #[cfg(test)]
             val: '🫀',
