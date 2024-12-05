@@ -15,29 +15,31 @@ use core::mem::{forget, replace};
 ///
 /// Check this phantasmal implementation for `usize`.
 /// `Orderable` implementation cannot work without providing `Treerder` with
-/// appropriate function for alphabet instantiation same as function for `char`
-/// index generation. Check `english_letters::ab` and `english_letters::ix`.
+/// appropriate alphabet same as function for `char` index generation.
 /// ```
-/// use treerder::{Orderable, Treerder, Alphabet, ab as ab_fn};
+/// use treerder::{Orderable, Treerder};
 ///
 /// #[derive(Debug, PartialEq)]
 /// struct LocalUsize(usize);
 ///
 /// struct LocalUsizeCharIterator {
-///     c: char,
-///     x: bool,
+///     s: String,
+///     c: usize,
 /// }
 ///
 /// impl Iterator for LocalUsizeCharIterator {
 ///     type Item = char;
 ///     
 ///     fn next(&mut self) -> Option<char> {
-///         if self.x {
-///             self.x = false;
-///             Some(self.c)
-///         } else {
-///             None
+///         let c = self.c;
+///         
+///         let opt = self.s.chars().nth(c);
+///         
+///         if opt.is_some() {
+///             self.c = c + 1;
 ///         }
+///         
+///         opt
 ///     }
 /// }
 ///
@@ -45,8 +47,10 @@ use core::mem::{forget, replace};
 ///     type Shadow = usize;
 ///     
 ///     fn chars(&self) -> impl Iterator<Item = char> {
-///         let c = self.0.to_string().chars().next().unwrap();
-///         LocalUsizeCharIterator { c, x: true }
+///         LocalUsizeCharIterator {
+///             s: self.0.to_string(),
+///             c: 0,
+///         }
 ///     }
 ///     
 ///     fn shadow(&self) -> Self::Shadow {
@@ -62,17 +66,14 @@ use core::mem::{forget, replace};
 ///     c.to_digit(10).unwrap() as usize
 /// }
 ///
-/// fn ab() -> Alphabet<LocalUsize> {
-///     ab_fn::<LocalUsize>(10)
-/// }
+/// let mut nums = [999, 333, 33, 3, 0, 100, 10, 1].map(|x| LocalUsize(x));
 ///
-/// let mut nums = [9, 8, 7, 5, 3, 1].map(|x| LocalUsize(x));
-///
-/// let mut orderer = Treerder::<LocalUsize>::new_with(ix, ab);
+/// let mut orderer = Treerder::<LocalUsize>::new_with(ix, 10);
 /// orderer.order(&mut nums);
 ///
-/// let proof = [1, 3, 5, 7, 8, 9].map(|x| LocalUsize(x));
+/// let proof = [0, 1, 10, 100, 3, 33, 333, 999].map(|x| LocalUsize(x));
 /// assert_eq!(proof, nums);
+///
 /// ```
 pub trait Orderable {
     /// Type that will represent `impl Orderable` in internal structures.
@@ -129,7 +130,7 @@ impl Orderable for String {
 
 /// `Letter` is `Alphabet` element, represents tree node.
 #[cfg_attr(test, derive(PartialEq))]
-pub struct Letter<T>
+struct Letter<T>
 where
     T: Orderable,
 {
@@ -154,23 +155,17 @@ where
 }
 
 /// Tree node arms. Consists of `Letter`s.
-pub type Alphabet<T> = Box<[Letter<T>]>;
-/// Index conversion function. Tighten with `Alphabet`.
+type Alphabet<T> = Box<[Letter<T>]>;
+/// Index conversion function. Tighten with alphabet used.
 /// Returns corresponding `usize`d index of `char`.
 ///
 /// For details see `english_letters::ix` implementation.
 pub type Ix = fn(char) -> usize;
-/// Alphabet function. Constructs alphabet that supports chosen `char`s.
-///
-/// Not all arms necessarily have to logically exists.
-///
-/// For details see `english_letters::ab` implementation.
-pub type Ab<T> = fn() -> Alphabet<T>;
 
 type Entries<T> = Vec<T>;
 
 /// Alphabet function, tree arms generation of length specified.
-pub fn ab<T>(len: usize) -> Alphabet<T>
+fn ab<T>(len: usize) -> Alphabet<T>
 where
     T: Orderable,
 {
@@ -202,25 +197,15 @@ where
     ab.into_boxed_slice()
 }
 
-/// Module contains functions for working with English alphabet letters, A-Za-z.
+/// Module for working with English alphabet letters, A-Za-z.
 ///
 /// For details see `Treerder::new_with()`.
 pub mod english_letters {
-
-    use crate::{ab as ab_fn, Alphabet, Orderable};
 
     /// 26
     pub const BASE_ALPHABET_LEN: usize = 26;
     /// 52
     pub const ALPHABET_LEN: usize = BASE_ALPHABET_LEN * 2;
-
-    /// `Alphabet` of English capital and small letters length.
-    pub fn ab<T>() -> Alphabet<T>
-    where
-        T: Orderable,
-    {
-        ab_fn(ALPHABET_LEN)
-    }
 
     /// Index conversion function.
     pub fn ix(c: char) -> usize {
@@ -241,7 +226,7 @@ pub mod english_letters {
 }
 
 // TC: Θ(n ⋅ alphabet size + e) ⇒ Θ(n), n = nodes count, e = entries count
-fn exc<'b, T>(ab: &'b mut Alphabet<T>, strs: &mut [T], mut wr_ix: usize) -> usize
+fn exc<'b, T>(ab: &'b mut Alphabet<T>, ts: &mut [T], mut wr_ix: usize) -> usize
 where
     T: Orderable,
 {
@@ -249,7 +234,7 @@ where
         if let Some(ens) = letter.ens.as_mut() {
             for e in ens.drain(0..) {
                 let steady = Orderable::steady(e);
-                let some = replace(&mut strs[wr_ix], steady);
+                let some = replace(&mut ts[wr_ix], steady);
 
                 // `Orderable` implementation should bond reconstructed type
                 // obligation to be fully-fledged replacement
@@ -262,7 +247,7 @@ where
         }
 
         if let Some(ab) = letter.ab.as_mut() {
-            wr_ix = exc(ab, strs, wr_ix);
+            wr_ix = exc(ab, ts, wr_ix);
             letter.ab = None;
         }
     }
@@ -280,7 +265,7 @@ where
 {
     root: Alphabet<T>,
     ix: Ix,
-    ab: Ab<T>,
+    al: usize,
 }
 
 impl<T> Treerder<T>
@@ -288,16 +273,20 @@ where
     T: Orderable,
 {
     /// Constructs default version of `Treerder`, i.e. via
-    /// `fn new_with()` with `english_letters::ab` and `english_letters::ix`.
+    /// `fn new_with()` with `english_letters::ALPHABET_LEN` and `english_letters::ix`.
     pub fn new() -> Self {
-        Self::new_with(english_letters::ix, english_letters::ab)
+        Self::new_with(english_letters::ix, english_letters::ALPHABET_LEN)
     }
 
     /// Allows to use custom alphabet different from default alphabet. See `fn new()`.
     ///
-    /// For details see implementations of module `english_letters`.
-    pub fn new_with(ix: Ix, ab: Ab<T>) -> Self {
-        Self { root: ab(), ix, ab }
+    /// For details see module `english_letters`.
+    pub fn new_with(ix: Ix, ab_len: usize) -> Self {
+        Self {
+            root: ab(ab_len),
+            ix,
+            al: ab_len,
+        }
     }
 
     /// Stable ordering.
@@ -309,11 +298,11 @@ where
     ///
     /// - TC: Ο(s) where s is sum of all `char`s iterated over.
     /// - SC: Θ(q) where q is number of unique nodes, i.e. `char`s in respective branches.
-    pub fn order(&mut self, strs: &mut [T]) {
+    pub fn order(&mut self, ts: &mut [T]) {
         let mut wr_ix = 0;
 
-        for ix in 0..strs.len() {
-            let curr = &strs[ix];
+        for ix in 0..ts.len() {
+            let curr = &ts[ix];
             let mut chars = curr.chars();
 
             if let Some(c) = chars.next() {
@@ -321,19 +310,19 @@ where
                 self.ins(shad, c, &mut chars);
             } else {
                 drop(chars);
-                strs.swap(wr_ix, ix);
+                ts.swap(wr_ix, ix);
                 wr_ix += 1;
             }
         }
 
-        exc(&mut self.root, strs, wr_ix);
+        exc(&mut self.root, ts, wr_ix);
     }
 
     // TC: Θ(l), l = `cs` length
     // SC: Θ(q ⋅ alphabet size) ⇒ Θ(q) as long as q > alphabet size, q = unique nodes count, [leaf node does not have arms (alphabet)]
     fn ins(&mut self, entry: T::Shadow, mut c: char, cs: &mut impl Iterator<Item = char>) {
         let ix = self.ix;
-        let ab = self.ab;
+        let al = self.al;
 
         let mut alphabet = &mut self.root;
 
@@ -343,7 +332,7 @@ where
 
             if let Some(cx) = cs.next() {
                 c = cx;
-                alphabet = letter.ab.get_or_insert_with(|| ab())
+                alphabet = letter.ab.get_or_insert_with(|| ab(al))
             } else {
                 let ens = letter.ens.get_or_insert_with(|| Entries::new());
                 ens.push(entry);
@@ -428,13 +417,6 @@ mod tests_of_units {
     }
 
     mod english_letters {
-        use crate::english_letters::{ab as ab_fn, ALPHABET_LEN};
-
-        #[test]
-        fn ab() {
-            let ab = ab_fn::<&str>();
-            assert_eq!(ALPHABET_LEN, ab.len());
-        }
 
         mod ix {
             use crate::english_letters::ix;
@@ -477,8 +459,12 @@ mod tests_of_units {
     }
 
     mod exc {
-        use crate::{exc, Alphabet, Letter};
-        use crate::english_letters::{ab as ab_fn, ix};
+        use crate::{ab as ab_ctor, exc, Alphabet, Letter, Orderable};
+        use crate::english_letters::{ALPHABET_LEN, ix};
+
+        fn ab_fn<T: Orderable>() -> Alphabet<T> {
+            ab_ctor(ALPHABET_LEN)
+        }
 
         #[test]
         fn basic_test() {
@@ -629,14 +615,14 @@ mod tests_of_units {
     }
 
     mod treerder {
-        use crate::{Treerder, Letter};
-        use crate::english_letters::{ix, ab};
+        use crate::{Treerder, ab};
+        use crate::english_letters::{ix, ALPHABET_LEN};
 
         #[test]
         fn new() {
             let orderer = Treerder::<&str>::new();
-            assert_eq!(ab(), orderer.root);
-            assert_eq!(ab::<&str> as usize, orderer.ab as usize);
+            assert_eq!(ab(ALPHABET_LEN), orderer.root);
+            assert_eq!(ALPHABET_LEN, orderer.al);
             assert_eq!(ix as usize, orderer.ix as usize);
         }
 
@@ -645,14 +631,12 @@ mod tests_of_units {
             fn test_ix(_c: char) -> usize {
                 0
             }
-            fn test_ab() -> Box<[Letter<String>]> {
-                Vec::new().into_boxed_slice()
-            }
 
-            let orderer = Treerder::<String>::new_with(test_ix, test_ab);
+            let ab_len = 99;
+            let orderer = Treerder::<String>::new_with(test_ix, ab_len);
 
-            assert_eq!(test_ab(), orderer.root);
-            assert_eq!(test_ab as usize, orderer.ab as usize);
+            assert_eq!(ab(ab_len), orderer.root);
+            assert_eq!(ab_len, orderer.al);
             assert_eq!(test_ix as usize, orderer.ix as usize);
         }
 

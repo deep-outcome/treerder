@@ -32,41 +32,46 @@ assert_eq!(proof, test);
 ### `Orderable` implementation with custom alphabet
 
 ```rust
-use treerder::{Orderable, Treerder, Alphabet, ab as ab_fn};
+use treerder::{Orderable, Treerder};
 
 #[derive(Debug, PartialEq)]
 struct LocalUsize(usize);
 
 struct LocalUsizeCharIterator {
-    c: char,
-    x: bool,
+    s: String,
+    c: usize,
 }
 
 impl Iterator for LocalUsizeCharIterator {
     type Item = char;
-    
+
     fn next(&mut self) -> Option<char> {
-        if self.x {
-            self.x = false;
-            Some(self.c)
-        } else {
-            None
+        let c = self.c;
+
+        let opt = self.s.chars().nth(c);
+
+        if opt.is_some() {
+            self.c = c + 1;
         }
+
+        opt
     }
 }
 
 impl Orderable for LocalUsize {
     type Shadow = usize;
-    
+
     fn chars(&self) -> impl Iterator<Item = char> {
-        let c = self.0.to_string().chars().next().unwrap();
-        LocalUsizeCharIterator { c, x: true }
+        LocalUsizeCharIterator {
+            s: self.0.to_string(),
+            c: 0,
+        }
     }
-    
+
     fn shadow(&self) -> Self::Shadow {
         self.0
     }
-    
+
     fn steady(s: Self::Shadow) -> Self {
         LocalUsize(s)
     }
@@ -76,16 +81,12 @@ fn ix(c: char) -> usize {
     c.to_digit(10).unwrap() as usize
 }
 
-fn ab() -> Alphabet<LocalUsize> {
-    ab_fn::<LocalUsize>(10)
-}
 
-let mut nums = [9, 8, 7, 5, 3, 1].map(|x| LocalUsize(x));
+let mut nums = [999, 333, 33, 3, 0, 100, 10, 1].map(|x| LocalUsize(x));
 
-let mut orderer = Treerder::<LocalUsize>::new_with(ix, ab);
+let mut orderer = Treerder::<LocalUsize>::new_with(ix, 10);
 orderer.order(&mut nums);
 
-let proof = [1, 3, 5, 7, 8, 9].map(|x| LocalUsize(x));
+let proof = [0, 1, 10, 100, 3, 33, 333, 999].map(|x| LocalUsize(x));
 assert_eq!(proof, nums);
-
 ```
