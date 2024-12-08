@@ -177,7 +177,7 @@ where
     let mut c = 'A' as u8;
 
     let sc = ab.spare_capacity_mut();
-    for ix in 0..len {        
+    for ix in 0..len {
         let mut _letter = sc[ix].write(Letter::new());
 
         #[cfg(test)]
