@@ -176,18 +176,19 @@ where
     #[cfg(feature = "test-ext")]
     let mut c = 'A' as u8;
 
-    for sc in ab.spare_capacity_mut()[..len].iter_mut() {
-        let mut _letter = sc.write(Letter::new());
+    let sc = ab.spare_capacity_mut();
+    for ix in 0..len {        
+        let mut _letter = sc[ix].write(Letter::new());
 
         #[cfg(test)]
         #[cfg(feature = "test-ext")]
         {
+            const Z: u8 = 'Z' as u8;
             _letter.val = c as char;
 
-            if c == 'Z' as u8 {
-                c = 'a' as u8;
-            } else {
-                c = c + 1;
+            c = match c {
+                | Z => 'a' as u8,
+                | c => c + 1,
             }
         }
     }
@@ -230,7 +231,8 @@ fn exc<'b, T>(ab: &'b mut Alphabet<T>, ts: &mut [T], mut wr_ix: usize) -> usize
 where
     T: Orderable,
 {
-    for letter in ab.iter_mut() {
+    for ix in 0..ab.len() {
+        let letter = &mut ab[ix];
         if let Some(ens) = letter.ens.as_mut() {
             for e in ens.drain(0..) {
                 let steady = Orderable::steady(e);
