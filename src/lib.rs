@@ -183,13 +183,10 @@ where
         #[cfg(test)]
         #[cfg(feature = "test-ext")]
         {
-            const Z: u8 = 'Z' as u8;
             _letter.val = c as char;
 
-            c = match c {
-                | Z => 'a' as u8,
-                | c => c + 1,
-            }
+            const Z: u8 = 'Z' as u8;
+            c = if c == Z { 'a' as u8 } else { c + 1 }
         }
     }
 
