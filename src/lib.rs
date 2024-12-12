@@ -231,7 +231,13 @@ where
     for ix in 0..ab.len() {
         let letter = &mut ab[ix];
         if let Some(ens) = letter.ens.as_mut() {
-            for e in ens.drain(0..) {
+            let ens_ptr = ens.as_ptr();
+            for ix in 0..ens.len() {
+                let e = unsafe {
+                    let ptr = ens_ptr.add(ix);
+                    ptr.read()
+                };
+
                 let steady = Orderable::steady(e);
                 let some = replace(&mut ts[wr_ix], steady);
 
@@ -242,6 +248,11 @@ where
 
                 wr_ix += 1;
             }
+
+            unsafe {
+                ens.set_len(0);
+            }
+
             letter.ens = None;
         }
 
@@ -610,6 +621,76 @@ mod tests_of_units {
                 l.ens = Some(ent.to_vec());
                 l
             }
+        }
+
+        /// `exc` must prevent double/early drop on values read from entries under letter
+        /// also must prevent drop on values from original storage
+        #[test]
+        fn no_double_drop() {
+            use core::cell::Cell;
+            use std::rc::Rc;
+
+            #[derive(Clone, PartialEq, Debug)]
+            struct Dropper {
+                s: String,
+                c: Rc<Cell<usize>>,
+            }
+
+            impl Orderable for Dropper {
+                type Shadow = Self;
+
+                fn chars(&self) -> impl Iterator<Item = char> {
+                    self.s.chars()
+                }
+
+                fn shadow(&self) -> Self {
+                    unimplemented!("Not used in test.")
+                }
+
+                fn steady(s: Self::Shadow) -> Self {
+                    s
+                }
+            }
+
+            impl Drop for Dropper {
+                fn drop(&mut self) {
+                    if self.s == "" {
+                        panic!("This should have never been executed.");
+                    }
+
+                    let c = self.c.get();
+                    _ = self.c.replace(c + 1);
+                }
+            }
+
+            let counter = Rc::new(Cell::new(0));
+
+            #[allow(non_snake_case)]
+            let A = Dropper {
+                s: String::from("A"),
+                c: counter.clone(),
+            };
+
+            let z = Dropper {
+                s: String::from("z"),
+                c: counter.clone(),
+            };
+
+            let mut ab = ab_fn();
+
+            ab[ix('A')].ens = Some(vec![A.clone()]);
+            ab[ix('z')].ens = Some(vec![z.clone()]);
+
+            let filler = Dropper {
+                s: String::from(""),
+                c: counter.clone(),
+            };
+
+            let mut droppers = [filler.clone(), filler];
+
+            exc(&mut ab, &mut droppers, 0);
+            assert_eq!(0, counter.get());
+            assert_eq!([A, z], droppers);
         }
     }
 
