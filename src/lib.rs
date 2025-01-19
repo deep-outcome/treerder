@@ -252,13 +252,10 @@ where
             unsafe {
                 ens.set_len(0);
             }
-
-            letter.ens = None;
         }
 
         if let Some(ab) = letter.ab.as_mut() {
             wr_ix = exc(ab, ts, wr_ix);
-            letter.ab = None;
         }
     }
 
@@ -326,6 +323,7 @@ where
         }
 
         exc(&mut self.root, ts, wr_ix);
+        self.root = ab(self.al);
     }
 
     // TC: Θ(l), l = `cs` length
@@ -498,10 +496,6 @@ mod tests_of_units {
                 offset += 1;
                 assert_eq!(*s, strs[offset]);
             }
-
-            for l in ab.iter() {
-                assert!(l.ens.is_none());
-            }
         }
 
         #[test]
@@ -530,11 +524,6 @@ mod tests_of_units {
             for s in ordered.iter() {
                 assert_eq!(*s, strs[re_ix]);
                 re_ix += 1;
-            }
-
-            for l in root.iter() {
-                assert!(l.ens.is_none());
-                assert!(l.ab.is_none());
             }
 
             fn prep<'a, 'b>(
@@ -596,11 +585,6 @@ mod tests_of_units {
             for s in ordered.iter() {
                 assert_eq!(*s, strs[re_ix]);
                 re_ix += 1;
-            }
-
-            for l in root.iter() {
-                assert!(l.ens.is_none());
-                assert!(l.ab.is_none());
             }
 
             fn add_ents_via_le<'a, 'b>(
@@ -746,6 +730,11 @@ mod tests_of_units {
                 ];
 
                 assert_eq!(proof, strs);
+
+                for l in orderer.root.iter() {
+                    assert!(l.ens.is_none());
+                    assert!(l.ab.is_none());
+                }
             }
 
             #[test]
