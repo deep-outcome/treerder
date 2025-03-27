@@ -13,20 +13,22 @@
 ### basic usage
 
 ```rust
-let mut test = [
-    String::from("zzz"),    
-    String::from("ZZZ"),    
-    String::from("aaa"),    
-    String::from("AAA"),    
-];
+let mut test_1 = ["zzz", "ZZZ", "aaa", "AAA"];
 
-let mut proof = test.clone();
+let mut test_2 = test_1.map(|x| String::from(x));
+
+let mut proof = test_1.clone();
 proof.sort();
 
 let mut orderer = Treerder::new();
-orderer.order(&mut test);
+orderer.order(&mut test_1);
+orderer.order(&mut test_2);
 
-assert_eq!(proof, test);
+for z in test_1.iter().zip(test_2.iter()) {
+    assert_eq!(*z.0, z.1.as_str());
+}
+
+assert_eq!(proof, test_1);
 ```
 
 ### `Orderable` implementation with custom alphabet
@@ -84,7 +86,7 @@ fn ix(c: char) -> usize {
 
 let mut nums = [999, 333, 33, 3, 0, 100, 10, 1].map(|x| LocalUsize(x));
 
-let mut orderer = Treerder::<LocalUsize>::new_with(ix, 10);
+let mut orderer = Treerder::new_with(ix, 10);
 orderer.order(&mut nums);
 
 let proof = [0, 1, 10, 100, 3, 33, 333, 999].map(|x| LocalUsize(x));

@@ -29,34 +29,34 @@ use core::mem::{forget, replace};
 ///
 /// impl Iterator for LocalUsizeCharIterator {
 ///     type Item = char;
-///     
+///
 ///     fn next(&mut self) -> Option<char> {
 ///         let c = self.c;
-///         
+///
 ///         let opt = self.s.chars().nth(c);
-///         
+///
 ///         if opt.is_some() {
 ///             self.c = c + 1;
 ///         }
-///         
+///
 ///         opt
 ///     }
 /// }
 ///
 /// impl Orderable for LocalUsize {
 ///     type Shadow = usize;
-///     
+///
 ///     fn chars(&self) -> impl Iterator<Item = char> {
 ///         LocalUsizeCharIterator {
 ///             s: self.0.to_string(),
 ///             c: 0,
 ///         }
 ///     }
-///     
+///
 ///     fn shadow(&self) -> Self::Shadow {
 ///         self.0
 ///     }
-///     
+///
 ///     fn steady(s: Self::Shadow) -> Self {
 ///         LocalUsize(s)
 ///     }
@@ -68,7 +68,7 @@ use core::mem::{forget, replace};
 ///
 /// let mut nums = [999, 333, 33, 3, 0, 100, 10, 1].map(|x| LocalUsize(x));
 ///
-/// let mut orderer = Treerder::<LocalUsize>::new_with(ix, 10);
+/// let mut orderer = Treerder::new_with(ix, 10);
 /// orderer.order(&mut nums);
 ///
 /// let proof = [0, 1, 10, 100, 3, 33, 333, 999].map(|x| LocalUsize(x));
@@ -266,19 +266,12 @@ where
 /// its `char` sequence representation.
 ///
 /// For details see `fn order`.
-pub struct Treerder<T>
-where
-    T: Orderable,
-{
-    root: Alphabet<T>,
+pub struct Treerder {
     ix: Ix,
     al: usize,
 }
 
-impl<T> Treerder<T>
-where
-    T: Orderable,
-{
+impl Treerder {
     /// Constructs default version of `Treerder`, i.e. via
     /// `fn new_with()` with `english_letters::ALPHABET_LEN` and `english_letters::ix`.
     pub fn new() -> Self {
@@ -289,11 +282,7 @@ where
     ///
     /// For details see module `english_letters`.
     pub fn new_with(ix: Ix, ab_len: usize) -> Self {
-        Self {
-            root: ab(ab_len),
-            ix,
-            al: ab_len,
-        }
+        Self { ix, al: ab_len }
     }
 
     /// Stable ordering.
@@ -305,16 +294,20 @@ where
     ///
     /// - TC: Ο(s) where s is sum of all `char`s iterated over.
     /// - SC: Θ(q) where q is number of unique nodes, i.e. `char`s in respective branches.
-    pub fn order(&mut self, ts: &mut [T]) {
+    pub fn order<T>(&mut self, ts: &mut [T])
+    where
+        T: Orderable,
+    {
         let mut wr_ix = 0;
 
+        let mut root = ab(self.al);
         for ix in 0..ts.len() {
             let curr = &ts[ix];
             let mut chars = curr.chars();
 
             if let Some(c) = chars.next() {
                 let shad = curr.shadow();
-                self.ins(shad, c, &mut chars);
+                self.ins(&mut root, shad, c, &mut chars);
             } else {
                 drop(chars);
                 ts.swap(wr_ix, ix);
@@ -322,17 +315,22 @@ where
             }
         }
 
-        exc(&mut self.root, ts, wr_ix);
-        self.root = ab(self.al);
+        exc(&mut root, ts, wr_ix);
     }
 
     // TC: Θ(l), l = `cs` length
     // SC: Θ(q ⋅ alphabet size) ⇒ Θ(q) as long as q > alphabet size, q = unique nodes count, [leaf node does not have arms (alphabet)]
-    fn ins(&mut self, entry: T::Shadow, mut c: char, cs: &mut impl Iterator<Item = char>) {
+    fn ins<T>(
+        &self,
+        mut alphabet: &mut Alphabet<T>,
+        entry: T::Shadow,
+        mut c: char,
+        cs: &mut impl Iterator<Item = char>,
+    ) where
+        T: Orderable,
+    {
         let ix = self.ix;
         let al = self.al;
-
-        let mut alphabet = &mut self.root;
 
         loop {
             let c_ix = ix(c);
@@ -679,13 +677,12 @@ mod tests_of_units {
     }
 
     mod treerder {
-        use crate::{Treerder, ab};
+        use crate::Treerder;
         use crate::english_letters::{ix, ALPHABET_LEN};
 
         #[test]
         fn new() {
-            let orderer = Treerder::<&str>::new();
-            assert_eq!(ab(ALPHABET_LEN), orderer.root);
+            let orderer = Treerder::new();
             assert_eq!(ALPHABET_LEN, orderer.al);
             assert_eq!(ix as usize, orderer.ix as usize);
         }
@@ -697,9 +694,8 @@ mod tests_of_units {
             }
 
             let ab_len = 99;
-            let orderer = Treerder::<String>::new_with(test_ix, ab_len);
+            let orderer = Treerder::new_with(test_ix, ab_len);
 
-            assert_eq!(ab(ab_len), orderer.root);
             assert_eq!(ab_len, orderer.al);
             assert_eq!(test_ix as usize, orderer.ix as usize);
         }
@@ -731,10 +727,13 @@ mod tests_of_units {
 
                 assert_eq!(proof, strs);
 
-                for l in orderer.root.iter() {
-                    assert!(l.ens.is_none());
-                    assert!(l.ab.is_none());
-                }
+                let BC = "BC";
+                let yx = "yx";
+
+                let mut strs = [yx, BC];
+                orderer.order(&mut strs);
+
+                assert_eq!([BC, yx], strs);
             }
 
             #[test]
@@ -892,21 +891,22 @@ mod tests_of_units {
         }
 
         mod ins {
-            use crate::Treerder;
+            use crate::{ab, Alphabet, Treerder};
             use crate::english_letters::ix;
 
             #[test]
             fn new_path() {
                 let entry = "impreciseness";
 
-                let mut to = Treerder::new();
-                to_ins(&mut to, &entry);
+                let to = Treerder::new();
+                let root = &mut ab::<&str>(to.al);
+                to_ins(&to, root, &entry);
 
                 let chars: Vec<char> = entry.chars().collect();
                 let len = chars.len();
                 let last_ix = len - 1;
 
-                let mut sup_ab = &to.root;
+                let mut sup_ab = &*root;
                 for c_ix in 0..len {
                     let c = chars[c_ix];
                     let l = &sup_ab[ix(c)];
@@ -936,15 +936,17 @@ mod tests_of_units {
 
                 assert_ne!(entry1.as_ptr() as usize, entry2.as_ptr() as usize);
 
-                let mut to = Treerder::new();
-                to_ins(&mut to, &*entry1);
-                to_ins(&mut to, &*entry2);
+                let to = Treerder::new();
+                let root = &mut ab::<&str>(to.al);
+
+                to_ins(&to, root, &*entry1);
+                to_ins(&to, root, &*entry2);
 
                 let chars: Vec<char> = entry0.chars().collect();
                 let len = chars.len();
                 let last_ix = len - 1;
 
-                let mut sup_ab = &to.root;
+                let mut sup_ab = &*root;
                 for c_ix in 0..len {
                     let c = chars[c_ix];
                     let l = &sup_ab[ix(c)];
@@ -967,11 +969,11 @@ mod tests_of_units {
                 }
             }
 
-            fn to_ins<'a>(to: &mut Treerder<&'a str>, e: &'a str) {
+            fn to_ins<'a>(to: &Treerder, ab: &mut Alphabet<&'a str>, e: &'a str) {
                 let mut cs = e.chars();
                 let c = cs.next().unwrap();
 
-                to.ins(e, c, &mut cs);
+                to.ins(ab, e, c, &mut cs);
             }
         }
     }
@@ -981,20 +983,22 @@ mod tests_of_units {
 
         #[test]
         fn test() {
-            let mut test = [
-                String::from("zzz"),
-                String::from("ZZZ"),
-                String::from("aaa"),
-                String::from("AAA"),
-            ];
+            let mut test_1 = ["zzz", "ZZZ", "aaa", "AAA"];
 
-            let mut proof = test.clone();
+            let mut test_2 = test_1.map(|x| String::from(x));
+
+            let mut proof = test_1.clone();
             proof.sort();
 
             let mut orderer = Treerder::new();
-            orderer.order(&mut test);
+            orderer.order(&mut test_1);
+            orderer.order(&mut test_2);
 
-            assert_eq!(proof, test);
+            for z in test_1.iter().zip(test_2.iter()) {
+                assert_eq!(*z.0, z.1.as_str());
+            }
+
+            assert_eq!(proof, test_1);
         }
 
         #[test]
@@ -1048,7 +1052,7 @@ mod tests_of_units {
 
             let mut nums = [999, 333, 33, 3, 0, 100, 10, 1].map(|x| LocalUsize(x));
 
-            let mut orderer = Treerder::<LocalUsize>::new_with(ix, 10);
+            let mut orderer = Treerder::new_with(ix, 10);
             orderer.order(&mut nums);
 
             let proof = [0, 1, 10, 100, 3, 33, 333, 999].map(|x| LocalUsize(x));
@@ -1058,3 +1062,4 @@ mod tests_of_units {
 }
 
 // cargo test --features test-ext --release
+// cargo test --release

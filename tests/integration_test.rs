@@ -51,7 +51,7 @@ fn ix(c: char) -> usize {
 fn test() {
     let mut nums = localusize(&[999, 333, 33, 3, 0, 100, 10, 1]);
 
-    let mut orderer = Treerder::<LocalUsize>::new_with(ix, 10);
+    let mut orderer = Treerder::new_with(ix, 10);
     orderer.order(&mut nums);
 
     assert_eq!(localusize(&[0, 1, 10, 100, 3, 33, 333, 999]), nums);
