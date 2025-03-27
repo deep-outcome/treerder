@@ -101,11 +101,11 @@ impl<'a> Orderable for &'a str {
     }
 
     /// It is simple to pass `&str` around as its cloning is cheap.
-    fn shadow(&self) -> Self::Shadow {
+    fn shadow(&self) -> &'a str {
         *self
     }
 
-    fn steady(s: Self::Shadow) -> Self {
+    fn steady(s: &'a str) -> Self {
         s
     }
 }
@@ -118,12 +118,12 @@ impl Orderable for String {
     }
 
     /// Cloning `String` is deep copy operation. `shadow` avoids this.
-    fn shadow(&self) -> Self::Shadow {
+    fn shadow(&self) -> String {
         let ptr = self as *const String;
         unsafe { ptr.read() }
     }
 
-    fn steady(s: Self::Shadow) -> Self {
+    fn steady(s: String) -> Self {
         s
     }
 }
